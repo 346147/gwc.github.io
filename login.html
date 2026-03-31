@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 健谈 FitChat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Noto Sans SC', sans-serif;
+            color: white;
+            overflow: hidden;
+            background: #1E3A5F;
+            min-width: 1440px;
+        }
+        
+        .login-container {
+            position: relative;
+            width: 100%;
+            min-width: 1440px;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .login-card {
+            position: relative;
+            z-index: 10;
+            width: 460px;
+            padding: 50px 56px;
+            background: rgba(30, 58, 95, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .login-card:hover {
+            border-color: rgba(255, 127, 80, 0.3);
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+        }
+        
+        .logo-text {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 6px;
+            text-shadow: 
+                0 0 8px rgba(255, 127, 80, 0.9),
+                0 0 15px rgba(255, 127, 80, 0.7),
+                0 0 25px rgba(255, 127, 80, 0.5);
+        }
+        
+        .logo-subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 1px;
+        }
+        
+        .login-form {
+            margin-bottom: 32px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-input {
+            width: 100%;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 0 16px;
+            font-family: 'PingFang SC', sans-serif;
+            font-size: 15px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #FF7F50;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(255, 127, 80, 0.15);
+        }
+        
+        .login-btn {
+            width: 100%;
+            height: 48px;
+            background: #FF7F50;
+            border: none;
+            border-radius: 10px;
+            font-family: 'PingFang SC', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+        }
+        
+        .login-btn:hover {
+            background: #FF6B3D;
+            transform: translateY(-1px);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 32px 0;
+        }
+        
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .divider-text {
+            padding: 0 16px;
+            font-family: 'PingFang SC', sans-serif;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+        
+        .social-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 26px;
+        }
+        
+        .social-icon.wechat {
+            background: #07C160;
+        }
+        
+        .social-icon.qq {
+            background: #12B7F5;
+        }
+        
+        .social-icon:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .register-section {
+            text-align: center;
+            margin-top: 28px;
+            padding-top: 28px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .register-text {
+            font-family: 'PingFang SC', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .register-link {
+            color: #FF7F50;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .register-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <canvas id="particle-canvas"></canvas>
+        
+        <div class="login-card">
+            <div class="logo-section">
+                <svg class="logo-icon" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="15" width="8" height="30" rx="3" fill="#FF7F50"/>
+                    <rect x="0" y="10" width="6" height="40" rx="2" fill="#FF7F50"/>
+                    <rect x="90" y="15" width="8" height="30" rx="3" fill="#FF7F50"/>
+                    <rect x="94" y="10" width="6" height="40" rx="2" fill="#FF7F50"/>
+                    <rect x="15" y="27" width="70" height="6" rx="3" fill="#FF7F50"/>
+                </svg>
+                <div class="logo-text">健谈</div>
+                <div class="logo-subtitle">FitChat</div>
+            </div>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <input type="text" class="form-input" placeholder="手机号 / 邮箱" id="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" class="form-input" placeholder="密码" id="password" required>
+                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">登录</button>
+            </form>
+            
+            <div class="divider">
+                <div class="divider-line"></div>
+                <span class="divider-text">其他登录方式</span>
+                <div class="divider-line"></div>
+            </div>
+            
+            <div class="social-icons">
+                <div class="social-icon wechat" title="微信登录">
+                    <span>💬</span>
+                </div>
+                <div class="social-icon qq" title="QQ登录">
+                    <span>🐧</span>
+                </div>
+            </div>
+            
+            <div class="register-section">
+                <span class="register-text">还没有账号？</span>
+                <a href="#" class="register-link">立即注册</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let particles = [];
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.opacity = Math.random() * 0.5 + 0.3;
+                
+                const colors = ['#FFD700', '#FF7F50', '#FFFFFF'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            update() {
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 100) {
+                    const force = (100 - distance) / 100;
+                    this.x -= dx * force * 0.02;
+                    this.y -= dy * force * 0.02;
+                }
+                
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+            
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.opacity;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        function createParticles() {
+            particles = [];
+            const particleCount = Math.floor(Math.random() * 10) + 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        createParticles();
+        animate();
+        
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('登录功能演示：登录成功！');
+        });
+    </script>
+</body>
+</html>

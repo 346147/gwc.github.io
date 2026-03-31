@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今日打卡榜 - 健谈 FitChat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Noto Sans SC', sans-serif;
+            color: white;
+            overflow-x: hidden;
+            overflow-y: auto;
+            background: #1E3A5F;
+        }
+        
+        .page-container {
+            position: relative;
+            width: 100vw;
+            min-height: 100vh;
+        }
+        
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(30, 58, 95, 0.2);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+        }
+        
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 10px;
+        }
+        
+        .header-dumbbell {
+            width: 32px;
+            height: 20px;
+        }
+        
+        .search-bar {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 40px;
+            position: relative;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+        }
+        
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .user-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-right: 10px;
+        }
+        
+        .notification-icon, .user-icon {
+            position: relative;
+            font-size: 18px;
+            cursor: pointer;
+            color: white;
+        }
+        
+        .notification-icon span, .user-icon span {
+            display: inline-block;
+            filter: brightness(0) invert(1);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            min-width: 18px;
+            height: 18px;
+            background: #ff7f50;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+            color: white;
+        }
+        
+        .main-content {
+            position: relative;
+            z-index: 1;
+            width: 1200px;
+            margin: 0 auto;
+            padding-top: 100px;
+            padding-bottom: 60px;
+        }
+        
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .page-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 40px;
+        }
+        
+        .rank-tabs {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .rank-tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .rank-tab:hover {
+            background: rgba(255, 127, 80, 0.2);
+            color: #FF7F50;
+        }
+        
+        .rank-tab.active {
+            background: #FF7F50;
+            color: white;
+        }
+        
+        .top-three {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .top-card {
+            width: 280px;
+            background: rgba(30, 58, 95, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .top-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .top-card.first {
+            order: 2;
+            transform: scale(1.05);
+            border-color: #FFD700;
+        }
+        
+        .top-card.first:hover {
+            transform: scale(1.05) translateY(-5px);
+        }
+        
+        .top-card.second {
+            order: 1;
+            border-color: #C0C0C0;
+        }
+        
+        .top-card.third {
+            order: 3;
+            border-color: #CD7F32;
+        }
+        
+        .rank-badge {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .top-card.first .rank-badge {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+        }
+        
+        .top-card.second .rank-badge {
+            background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+            color: white;
+        }
+        
+        .top-card.third .rank-badge {
+            background: linear-gradient(135deg, #CD7F32, #B87333);
+            color: white;
+        }
+        
+        .top-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF7F50, #FFD700);
+            margin: 20px auto 16px;
+        }
+        
+        .top-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .top-days {
+            font-size: 28px;
+            font-weight: 700;
+            color: #FF7F50;
+            margin-bottom: 8px;
+        }
+        
+        .top-days span {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .top-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(255, 127, 80, 0.2);
+            border-radius: 20px;
+            font-size: 13px;
+            color: #FF7F50;
+        }
+        
+        .rank-list {
+            background: rgba(30, 58, 95, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+        }
+        
+        .rank-list-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .rank-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .rank-item:hover {
+            background: rgba(255, 127, 80, 0.1);
+        }
+        
+        .rank-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .rank-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .rank-item:nth-child(-n+3) .rank-number {
+            background: rgba(255, 127, 80, 0.2);
+            color: #FF7F50;
+        }
+        
+        .rank-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF7F50, #FFD700);
+            margin-right: 20px;
+        }
+        
+        .rank-info {
+            flex: 1;
+        }
+        
+        .rank-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        
+        .rank-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .rank-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .rank-days-badge {
+            padding: 8px 20px;
+            background: rgba(255, 127, 80, 0.2);
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #FF7F50;
+        }
+        
+        .load-more {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .load-more:hover {
+            color: #FF7F50;
+        }
+        
+        /* 登录模态框样式 */
+        .login-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .login-modal-overlay.active {
+            display: flex;
+        }
+        
+        .login-modal {
+            width: 400px;
+            background: rgba(30, 58, 95, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .login-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+            color: white;
+        }
+        
+        .login-modal-close:hover {
+            background: rgba(255, 127, 80, 0.3);
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 36px;
+            margin: 0 auto 12px;
+        }
+        
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+        
+        .logo-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .login-form {
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-input {
+            width: 100%;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 0 16px;
+            font-size: 15px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #FF7F50;
+        }
+        
+        .login-btn {
+            width: 100%;
+            height: 48px;
+            background: #FF7F50;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .login-btn:hover {
+            background: #FF6B3D;
+            transform: translateY(-2px);
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+        }
+        
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .divider-text {
+            margin: 0 16px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .social-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background: rgba(255, 127, 80, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .register-section {
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .register-text {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .register-link {
+            color: #FF7F50;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        
+        .register-link:hover {
+            text-decoration: underline;
+        }
+        
+        .back-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 127, 80, 0.3);
+        }
+        
+        /* AI助手样式 */
+        .ai-assistant-btn {
+            position: fixed;
+            bottom: 120px;
+            right: 40px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #4A90E2, #7B68EE);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(74, 144, 226, 0.4);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+        
+        .ai-assistant-btn:hover {
+            box-shadow: 0 6px 30px rgba(74, 144, 226, 0.6);
+            transform: scale(1.1);
+        }
+        
+        .ai-assistant-btn span {
+            font-size: 28px;
+        }
+        
+        .ai-assistant-window {
+            position: fixed;
+            bottom: 200px;
+            right: 40px;
+            width: 380px;
+            height: 500px;
+            background: rgba(30, 58, 95, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .ai-assistant-window.active {
+            display: flex;
+        }
+        
+        .ai-assistant-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #4A90E2, #7B68EE);
+            color: white;
+        }
+        
+        .ai-assistant-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .ai-assistant-close {
+            cursor: pointer;
+            font-size: 20px;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+        
+        .ai-assistant-close:hover {
+            opacity: 1;
+        }
+        
+        .ai-assistant-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .ai-message {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .ai-message-content {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            border-radius: 16px;
+            max-width: 85%;
+            font-size: 14px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: pre-line;
+        }
+        
+        .user-message {
+            justify-content: flex-end;
+        }
+        
+        .user-message .ai-message-content {
+            background: linear-gradient(135deg, #FF7F50, #FFD700);
+            color: white;
+        }
+        
+        .ai-assistant-input {
+            display: flex;
+            gap: 10px;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .ai-assistant-input input {
+            flex: 1;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 0 16px;
+            font-size: 14px;
+            color: white;
+            outline: none;
+        }
+        
+        .ai-assistant-input input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .ai-assistant-input input:focus {
+            border-color: #4A90E2;
+        }
+        
+        .ai-assistant-input button {
+            height: 40px;
+            padding: 0 20px;
+            background: linear-gradient(135deg, #4A90E2, #7B68EE);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-assistant-input button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <canvas id="particle-canvas"></canvas>
+        
+        <div class="header">
+            <div class="header-logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <svg class="header-dumbbell" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="15" width="8" height="30" rx="3" fill="#FF7F50"/>
+                    <rect x="0" y="10" width="6" height="40" rx="2" fill="#FF7F50"/>
+                    <rect x="90" y="15" width="8" height="30" rx="3" fill="#FF7F50"/>
+                    <rect x="94" y="10" width="6" height="40" rx="2" fill="#FF7F50"/>
+                    <rect x="15" y="27" width="70" height="6" rx="3" fill="#FF7F50"/>
+                </svg>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="搜索讨论">
+            </div>
+            <div class="user-controls">
+                <div class="notification-icon" onclick="window.location.href='messages.html'" style="cursor: pointer;">
+                    <span>🔔</span>
+                    <div class="notification-badge">3</div>
+                </div>
+                <div class="user-icon" onclick="openLoginModal()" style="cursor: pointer;">
+                    <span>👤</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <button class="back-btn" onclick="history.back()">← 返回</button>
+            <h1 class="page-title">🏆 今日打卡榜</h1>
+            <p class="page-subtitle">坚持就是胜利，看看今天谁最努力！</p>
+            
+            <div class="rank-tabs">
+                <div class="rank-tab active">连续打卡榜</div>
+                <div class="rank-tab">今日新增榜</div>
+                <div class="rank-tab">周榜</div>
+                <div class="rank-tab">月榜</div>
+            </div>
+            
+            <div class="top-three">
+                <div class="top-card second">
+                    <div class="rank-badge">2</div>
+                    <div class="top-avatar" onclick="goToUser('大熊')" style="cursor: pointer;"></div>
+                    <div class="top-name" onclick="goToUser('大熊')" style="cursor: pointer;">大熊</div>
+                    <div class="top-days">15<span> 天</span></div>
+                    <div class="top-badge">🔥 坚持不懈</div>
+                </div>
+                
+                <div class="top-card first">
+                    <div class="rank-badge">1</div>
+                    <div class="top-avatar" onclick="goToUser('晓晓')" style="cursor: pointer;"></div>
+                    <div class="top-name" onclick="goToUser('晓晓')" style="cursor: pointer;">晓晓</div>
+                    <div class="top-days">30<span> 天</span></div>
+                    <div class="top-badge">👑 打卡女王</div>
+                </div>
+                
+                <div class="top-card third">
+                    <div class="rank-badge">3</div>
+                    <div class="top-avatar" onclick="goToUser('莉莉')" style="cursor: pointer;"></div>
+                    <div class="top-name" onclick="goToUser('莉莉')" style="cursor: pointer;">莉莉</div>
+                    <div class="top-days">7<span> 天</span></div>
+                    <div class="top-badge">💪 初露锋芒</div>
+                </div>
+            </div>
+            
+            <div class="rank-list">
+                <div class="rank-list-title">📊 完整榜单</div>
+                
+                <div class="rank-item" onclick="goToUser('跑步小妹')" style="cursor: pointer;">
+                    <div class="rank-number">4</div>
+                    <div class="rank-avatar"></div>
+                    <div class="rank-info">
+                        <div class="rank-name">跑步小妹</div>
+                        <div class="rank-stats">
+                            <div class="rank-stat">📝 帖子 128</div>
+                            <div class="rank-stat">❤️ 获赞 2.5k</div>
+                            <div class="rank-stat">👥 粉丝 856</div>
+                        </div>
+                    </div>
+                    <div class="rank-days-badge">21 天</div>
+                </div>
+                
+                <div class="rank-item" onclick="goToUser('马拉松狂人')" style="cursor: pointer;">
+                    <div class="rank-number">5</div>
+                    <div class="rank-avatar"></div>
+                    <div class="rank-info">
+                        <div class="rank-name">马拉松狂人</div>
+                        <div class="rank-stats">
+                            <div class="rank-stat">📝 帖子 312</div>
+                            <div class="rank-stat">❤️ 获赞 4.2k</div>
+                            <div class="rank-stat">👥 粉丝 1523</div>
+                        </div>
+                    </div>
+                    <div class="rank-days-badge">18 天</div>
+                </div>
+                
+                <div class="rank-item" onclick="goToUser('增肌阿杰')" style="cursor: pointer;">
+                    <div class="rank-number">6</div>
+                    <div class="rank-avatar"></div>
+                    <div class="rank-info">
+                        <div class="rank-name">增肌阿杰</div>
+                        <div class="rank-stats">
+                            <div class="rank-stat">📝 帖子 256</div>
+                            <div class="rank-stat">❤️ 获赞 3.8k</div>
+                            <div class="rank-stat">👥 粉丝 1205</div>
+                        </div>
+                    </div>
+                    <div class="rank-days-badge">14 天</div>
+                </div>
+                
+                <div class="rank-item" onclick="goToUser('瑜伽静静')" style="cursor: pointer;">
+                    <div class="rank-number">7</div>
+                    <div class="rank-avatar"></div>
+                    <div class="rank-info">
+                        <div class="rank-name">瑜伽静静</div>
+                        <div class="rank-stats">
+                            <div class="rank-stat">📝 帖子 89</div>
+                            <div class="rank-stat">❤️ 获赞 1.8k</div>
+                            <div class="rank-stat">👥 粉丝 654</div>
+                        </div>
+                    </div>
+                    <div class="rank-days-badge">12 天</div>
+                </div>
+                
+                <div class="rank-item" onclick="goToUser('晨跑小王子')" style="cursor: pointer;">
+                    <div class="rank-number">8</div>
+                    <div class="rank-avatar"></div>
+                    <div class="rank-info">
+                        <div class="rank-name">晨跑小王子</div>
+                        <div class="rank-stats">
+                            <div class="rank-stat">📝 帖子 156</div>
+                            <div class="rank-stat">❤️ 获赞 3.2k</div>
+                            <div class="rank-stat">👥 粉丝 987</div>
+                        </div>
+                    </div>
+                    <div class="rank-days-badge">10 天</div>
+                </div>
+                
+                <div class="rank-item" onclick="goToUser('肌肉教练')" style="cursor: pointer;">
+                    <div class="rank-number">9</div>
+                    <div class="rank-avatar"></div>
+                    <div class="rank-info">
+                        <div class="rank-name">肌肉教练</div>
+                        <div class="rank-stats">
+                            <div class="rank-stat">📝 帖子 456</div>
+                            <div class="rank-stat">❤️ 获赞 8.9k</div>
+                            <div class="rank-stat">👥 粉丝 3256</div>
+                        </div>
+                    </div>
+                    <div class="rank-days-badge">8 天</div>
+                </div>
+                
+                <div class="rank-item" onclick="goToUser('力量王者')" style="cursor: pointer;">
+                    <div class="rank-number">10</div>
+                    <div class="rank-avatar"></div>
+                    <div class="rank-info">
+                        <div class="rank-name">力量王者</div>
+                        <div class="rank-stats">
+                            <div class="rank-stat">📝 帖子 189</div>
+                            <div class="rank-stat">❤️ 获赞 4.1k</div>
+                            <div class="rank-stat">👥 粉丝 1456</div>
+                        </div>
+                    </div>
+                    <div class="rank-days-badge">6 天</div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI助手 -->
+    <div class="ai-assistant-btn" id="aiAssistantBtn" onclick="toggleAIAssistant()">
+        <span>🤖</span>
+    </div>
+    
+    <div class="ai-assistant-window" id="aiAssistantWindow">
+        <div class="ai-assistant-header">
+            <div class="ai-assistant-title">
+                <span>🤖</span>
+                <span>健身助手</span>
+            </div>
+            <div class="ai-assistant-close" onclick="toggleAIAssistant()">✕</div>
+        </div>
+        <div class="ai-assistant-messages" id="aiMessages">
+            <div class="ai-message">
+                <div class="ai-message-content">你好！我是你的健身助手，有什么可以帮助你的吗？</div>
+            </div>
+        </div>
+        <div class="ai-assistant-input">
+            <input type="text" id="aiInput" placeholder="输入你的问题..." onkeypress="handleAIKeyPress(event)">
+            <button onclick="sendAIMessage()">发送</button>
+        </div>
+    </div>
+    
+    <script>
+        function goToUser(name) {
+            window.location.href = 'user-detail.html?name=' + encodeURIComponent(name);
+        }
+        
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let particles = [];
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.opacity = Math.random() * 0.5 + 0.3;
+                
+                const colors = ['#FFD700', '#FF7F50', '#FFFFFF'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            update() {
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 100) {
+                    const force = (100 - distance) / 100;
+                    this.x -= dx * force * 0.02;
+                    this.y -= dy * force * 0.02;
+                }
+                
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+            
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.opacity;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        function createParticles() {
+            particles = [];
+            const particleCount = Math.floor(Math.random() * 10) + 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        createParticles();
+        animate();
+        
+        // 设置头像
+        function setAvatars() {
+            // 为所有用户设置头像
+            const rankItems = document.querySelectorAll('.rank-item');
+            rankItems.forEach(item => {
+                const name = item.querySelector('.rank-name').textContent;
+                const avatarElement = item.querySelector('.rank-avatar');
+                
+                // 根据用户名称设置对应的头像
+                switch (name) {
+                    case '跑步小妹':
+                        avatarElement.style.background = 'url("图片/跑步小妹/头像.png")';
+                        break;
+                    case '增肌阿杰':
+                        avatarElement.style.background = 'url("图片/增肌阿杰/头像.png")';
+                        break;
+                    case '晓晓':
+                        avatarElement.style.background = 'url("图片/晓晓/头像.png")';
+                        break;
+                    case '大熊':
+                        avatarElement.style.background = 'url("图片/大熊/头像.png")';
+                        break;
+                    case '莉莉':
+                        avatarElement.style.background = 'url("图片/莉莉/头像.png")';
+                        break;
+                    case '瑜伽静静':
+                        avatarElement.style.background = 'url("图片/瑜伽静静/头像.png")';
+                        break;
+                    case '马拉松狂人':
+                        avatarElement.style.background = 'url("图片/马拉松狂人/头像.png")';
+                        break;
+                    case '晨跑小王子':
+                        avatarElement.style.background = 'url("图片/晨跑小王子/头像.png")';
+                        break;
+                    case '肌肉教练':
+                        avatarElement.style.background = 'url("图片/肌肉教练/头像.png")';
+                        break;
+                    case '力量王者':
+                        avatarElement.style.background = 'url("图片/力量王者/头像.png")';
+                        break;
+                    case '挑战王者':
+                        avatarElement.style.background = 'url("图片/挑战王者/头像.png")';
+                        break;
+                    case '目标达人':
+                        avatarElement.style.background = 'url("图片/目标达人/头像.png")';
+                        break;
+                    case '完赛英雄':
+                        avatarElement.style.background = 'url("图片/完赛英雄/头像.png")';
+                        break;
+                    case '健身老司机':
+                        avatarElement.style.background = 'url("图片/健身老司机/头像.png")';
+                        break;
+                    case '新手小白':
+                        avatarElement.style.background = 'url("图片/新手小白/头像.png")';
+                        break;
+                    case '资深教练':
+                        avatarElement.style.background = 'url("图片/资深教练/头像.png")';
+                        break;
+                    default:
+                        // 为其他用户设置默认头像
+                        avatarElement.style.background = 'linear-gradient(135deg, #FF7F50, #FFD700)';
+                }
+                
+                // 设置头像样式
+                avatarElement.style.backgroundSize = 'cover';
+                avatarElement.style.backgroundPosition = 'center';
+            });
+            
+            // 为前三名设置头像
+            const topCards = document.querySelectorAll('.top-card');
+            topCards.forEach(card => {
+                const name = card.querySelector('.top-name').textContent;
+                const avatarElement = card.querySelector('.top-avatar');
+                
+                // 根据用户名称设置对应的头像
+                switch (name) {
+                    case '跑步小妹':
+                        avatarElement.style.background = 'url("图片/跑步小妹/头像.png")';
+                        break;
+                    case '增肌阿杰':
+                        avatarElement.style.background = 'url("图片/增肌阿杰/头像.png")';
+                        break;
+                    case '晓晓':
+                        avatarElement.style.background = 'url("图片/晓晓/头像.png")';
+                        break;
+                    case '大熊':
+                        avatarElement.style.background = 'url("图片/大熊/头像.png")';
+                        break;
+                    case '莉莉':
+                        avatarElement.style.background = 'url("图片/莉莉/头像.png")';
+                        break;
+                    case '瑜伽静静':
+                        avatarElement.style.background = 'url("图片/瑜伽静静/头像.png")';
+                        break;
+                    case '马拉松狂人':
+                        avatarElement.style.background = 'url("图片/马拉松狂人/头像.png")';
+                        break;
+                    case '晨跑小王子':
+                        avatarElement.style.background = 'url("图片/晨跑小王子/头像.png")';
+                        break;
+                    case '肌肉教练':
+                        avatarElement.style.background = 'url("图片/肌肉教练/头像.png")';
+                        break;
+                    case '力量王者':
+                        avatarElement.style.background = 'url("图片/力量王者/头像.png")';
+                        break;
+                    case '挑战王者':
+                        avatarElement.style.background = 'url("图片/挑战王者/头像.png")';
+                        break;
+                    case '目标达人':
+                        avatarElement.style.background = 'url("图片/目标达人/头像.png")';
+                        break;
+                    case '完赛英雄':
+                        avatarElement.style.background = 'url("图片/完赛英雄/头像.png")';
+                        break;
+                    case '健身老司机':
+                        avatarElement.style.background = 'url("图片/健身老司机/头像.png")';
+                        break;
+                    case '新手小白':
+                        avatarElement.style.background = 'url("图片/新手小白/头像.png")';
+                        break;
+                    case '资深教练':
+                        avatarElement.style.background = 'url("图片/资深教练/头像.png")';
+                        break;
+                    default:
+                        // 为其他用户设置默认头像
+                        avatarElement.style.background = 'linear-gradient(135deg, #FF7F50, #FFD700)';
+                }
+                
+                // 设置头像样式
+                avatarElement.style.backgroundSize = 'cover';
+                avatarElement.style.backgroundPosition = 'center';
+            });
+        }
+        
+        // 页面加载完成后设置头像
+        window.addEventListener('load', setAvatars);
+        
+        const rankData = {
+            '连续打卡榜': {
+                top3: [
+                    { name: '晓晓', days: 30, badge: '👑 打卡女王' },
+                    { name: '大熊', days: 15, badge: '🔥 坚持不懈' },
+                    { name: '莉莉', days: 7, badge: '💪 初露锋芒' }
+                ],
+                list: [
+                    { name: '跑步小妹', posts: 128, likes: '2.5k', followers: 856, days: 21 },
+                    { name: '马拉松狂人', posts: 312, likes: '4.2k', followers: 1523, days: 18 },
+                    { name: '增肌阿杰', posts: 256, likes: '3.8k', followers: 1205, days: 14 },
+                    { name: '瑜伽静静', posts: 89, likes: '1.8k', followers: 654, days: 12 },
+                    { name: '晨跑小王子', posts: 156, likes: '3.2k', followers: 987, days: 10 },
+                    { name: '肌肉教练', posts: 456, likes: '8.9k', followers: 3256, days: 8 },
+                    { name: '力量王者', posts: 189, likes: '4.1k', followers: 1456, days: 6 }
+                ],
+                moreList: [
+                    { name: '健身达人', posts: 234, likes: '6.7k', followers: 2134, days: 5 },
+                    { name: '营养师小王', posts: 156, likes: '3.4k', followers: 1876, days: 4 },
+                    { name: '美食博主', posts: 189, likes: '4.5k', followers: 2567, days: 3 },
+                    { name: '轻食专家', posts: 98, likes: '2.1k', followers: 987, days: 2 },
+                    { name: '挑战王者', posts: 178, likes: '4.8k', followers: 2345, days: 1 },
+                    { name: '目标达人', posts: 134, likes: '3.2k', followers: 1567, days: 1 },
+                    { name: '完赛英雄', posts: 167, likes: '3.9k', followers: 1897, days: 1 },
+                    { name: '健身老司机', posts: 234, likes: '5.6k', followers: 2876, days: 1 },
+                    { name: '新手小白', posts: 45, likes: '890', followers: 345, days: 1 },
+                    { name: '资深教练', posts: 345, likes: '7.8k', followers: 4567, days: 1 }
+                ]
+            },
+            '今日新增榜': {
+                top3: [
+                    { name: '肌肉教练', days: 156, badge: '🏆 今日之星' },
+                    { name: '跑步小妹', days: 89, badge: '⭐ 活力满满' },
+                    { name: '健身达人', days: 67, badge: '🌟 精力充沛' }
+                ],
+                list: [
+                    { name: '马拉松狂人', posts: 312, likes: '4.2k', followers: 1523, days: 45 },
+                    { name: '增肌阿杰', posts: 256, likes: '3.8k', followers: 1205, days: 38 },
+                    { name: '晓晓', posts: 198, likes: '5.6k', followers: 2345, days: 32 },
+                    { name: '力量王者', posts: 189, likes: '4.1k', followers: 1456, days: 28 },
+                    { name: '晨跑小王子', posts: 156, likes: '3.2k', followers: 987, days: 21 },
+                    { name: '瑜伽静静', posts: 89, likes: '1.8k', followers: 654, days: 15 },
+                    { name: '大熊', posts: 145, likes: '2.9k', followers: 876, days: 12 }
+                ],
+                moreList: [
+                    { name: '营养师小王', posts: 156, likes: '3.4k', followers: 1876, days: 10 },
+                    { name: '美食博主', posts: 189, likes: '4.5k', followers: 2567, days: 8 },
+                    { name: '轻食专家', posts: 98, likes: '2.1k', followers: 987, days: 6 },
+                    { name: '挑战王者', posts: 178, likes: '4.8k', followers: 2345, days: 5 },
+                    { name: '目标达人', posts: 134, likes: '3.2k', followers: 1567, days: 4 },
+                    { name: '完赛英雄', posts: 167, likes: '3.9k', followers: 1897, days: 3 },
+                    { name: '健身老司机', posts: 234, likes: '5.6k', followers: 2876, days: 2 },
+                    { name: '新手小白', posts: 45, likes: '890', followers: 345, days: 1 },
+                    { name: '资深教练', posts: 345, likes: '7.8k', followers: 4567, days: 1 },
+                    { name: '瑜伽导师', posts: 178, likes: '4.2k', followers: 2345, days: 1 }
+                ]
+            },
+            '周榜': {
+                top3: [
+                    { name: '马拉松狂人', days: 523, badge: '🥇 周冠军' },
+                    { name: '肌肉教练', days: 489, badge: '🥈 周亚军' },
+                    { name: '晓晓', days: 456, badge: '🥉 周季军' }
+                ],
+                list: [
+                    { name: '力量王者', posts: 189, likes: '4.1k', followers: 1456, days: 398 },
+                    { name: '增肌阿杰', posts: 256, likes: '3.8k', followers: 1205, days: 356 },
+                    { name: '跑步小妹', posts: 128, likes: '2.5k', followers: 856, days: 312 },
+                    { name: '晨跑小王子', posts: 156, likes: '3.2k', followers: 987, days: 289 },
+                    { name: '健身达人', posts: 234, likes: '6.7k', followers: 2134, days: 267 },
+                    { name: '瑜伽静静', posts: 89, likes: '1.8k', followers: 654, days: 234 },
+                    { name: '莉莉', posts: 167, likes: '3.4k', followers: 1098, days: 198 }
+                ],
+                moreList: [
+                    { name: '大熊', posts: 145, likes: '2.9k', followers: 876, days: 178 },
+                    { name: '营养师小王', posts: 156, likes: '3.4k', followers: 1876, days: 156 },
+                    { name: '美食博主', posts: 189, likes: '4.5k', followers: 2567, days: 134 },
+                    { name: '轻食专家', posts: 98, likes: '2.1k', followers: 987, days: 112 },
+                    { name: '挑战王者', posts: 178, likes: '4.8k', followers: 2345, days: 98 },
+                    { name: '目标达人', posts: 134, likes: '3.2k', followers: 1567, days: 87 },
+                    { name: '完赛英雄', posts: 167, likes: '3.9k', followers: 1897, days: 76 },
+                    { name: '健身老司机', posts: 234, likes: '5.6k', followers: 2876, days: 65 },
+                    { name: '新手小白', posts: 45, likes: '890', followers: 345, days: 54 },
+                    { name: '资深教练', posts: 345, likes: '7.8k', followers: 4567, days: 43 }
+                ]
+            },
+            '月榜': {
+                top3: [
+                    { name: '力量王者', days: 2156, badge: '👑 月度王者' },
+                    { name: '马拉松狂人', days: 1987, badge: '🔥 月度达人' },
+                    { name: '健身达人', days: 1834, badge: '💪 月度健将' }
+                ],
+                list: [
+                    { name: '肌肉教练', posts: 456, likes: '8.9k', followers: 3256, days: 1756 },
+                    { name: '晓晓', posts: 198, likes: '5.6k', followers: 2345, days: 1567 },
+                    { name: '增肌阿杰', posts: 256, likes: '3.8k', followers: 1205, days: 1432 },
+                    { name: '跑步小妹', posts: 128, likes: '2.5k', followers: 856, days: 1289 },
+                    { name: '晨跑小王子', posts: 156, likes: '3.2k', followers: 987, days: 1123 },
+                    { name: '大熊', posts: 145, likes: '2.9k', followers: 876, days: 987 },
+                    { name: '瑜伽静静', posts: 89, likes: '1.8k', followers: 654, days: 876 }
+                ],
+                moreList: [
+                    { name: '莉莉', posts: 167, likes: '3.4k', followers: 1098, days: 765 },
+                    { name: '营养师小王', posts: 156, likes: '3.4k', followers: 1876, days: 654 },
+                    { name: '美食博主', posts: 189, likes: '4.5k', followers: 2567, days: 543 },
+                    { name: '轻食专家', posts: 98, likes: '2.1k', followers: 987, days: 432 },
+                    { name: '挑战王者', posts: 178, likes: '4.8k', followers: 2345, days: 321 },
+                    { name: '目标达人', posts: 134, likes: '3.2k', followers: 1567, days: 234 },
+                    { name: '完赛英雄', posts: 167, likes: '3.9k', followers: 1897, days: 198 },
+                    { name: '健身老司机', posts: 234, likes: '5.6k', followers: 2876, days: 176 },
+                    { name: '新手小白', posts: 45, likes: '890', followers: 345, days: 123 },
+                    { name: '资深教练', posts: 345, likes: '7.8k', followers: 4567, days: 98 }
+                ]
+            }
+        };
+        
+        let currentTab = '连续打卡榜';
+        let loadedMore = false;
+        
+        function updateRankList(tabName) {
+            currentTab = tabName;
+            loadedMore = false;
+            const data = rankData[tabName];
+            const topThree = document.querySelector('.top-three');
+            const rankList = document.querySelector('.rank-list');
+            
+            const top3Html = `
+                <div class="top-card second">
+                    <div class="rank-badge">2</div>
+                    <div class="top-avatar" onclick="goToUser('${data.top3[1].name}')" style="cursor: pointer;"></div>
+                    <div class="top-name" onclick="goToUser('${data.top3[1].name}')" style="cursor: pointer;">${data.top3[1].name}</div>
+                    <div class="top-days">${data.top3[1].days}<span> ${tabName === '今日新增榜' ? '次' : '天'}</span></div>
+                    <div class="top-badge">${data.top3[1].badge}</div>
+                </div>
+                
+                <div class="top-card first">
+                    <div class="rank-badge">1</div>
+                    <div class="top-avatar" onclick="goToUser('${data.top3[0].name}')" style="cursor: pointer;"></div>
+                    <div class="top-name" onclick="goToUser('${data.top3[0].name}')" style="cursor: pointer;">${data.top3[0].name}</div>
+                    <div class="top-days">${data.top3[0].days}<span> ${tabName === '今日新增榜' ? '次' : '天'}</span></div>
+                    <div class="top-badge">${data.top3[0].badge}</div>
+                </div>
+                
+                <div class="top-card third">
+                    <div class="rank-badge">3</div>
+                    <div class="top-avatar" onclick="goToUser('${data.top3[2].name}')" style="cursor: pointer;"></div>
+                    <div class="top-name" onclick="goToUser('${data.top3[2].name}')" style="cursor: pointer;">${data.top3[2].name}</div>
+                    <div class="top-days">${data.top3[2].days}<span> ${tabName === '今日新增榜' ? '次' : '天'}</span></div>
+                    <div class="top-badge">${data.top3[2].badge}</div>
+                </div>
+            `;
+            topThree.innerHTML = top3Html;
+            
+            renderRankList(data, tabName, false);
+            
+            // 更新头像
+            setTimeout(setAvatars, 0);
+        }
+        
+        function renderRankList(data, tabName, showMore) {
+            const rankList = document.querySelector('.rank-list');
+            const displayList = showMore ? [...data.list, ...data.moreList] : data.list;
+            
+            const listHtml = displayList.map((item, index) => `
+                <div class="rank-item" onclick="goToUser('${item.name}')" style="cursor: pointer;">
+                    <div class="rank-number">${index + 4}</div>
+                    <div class="rank-avatar"></div>
+                    <div class="rank-info">
+                        <div class="rank-name">${item.name}</div>
+                        <div class="rank-stats">
+                            <div class="rank-stat">📝 帖子 ${item.posts}</div>
+                            <div class="rank-stat">❤️ 获赞 ${item.likes}</div>
+                            <div class="rank-stat">👥 粉丝 ${item.followers}</div>
+                        </div>
+                    </div>
+                    <div class="rank-days-badge">${item.days} ${tabName === '今日新增榜' ? '次' : '天'}</div>
+                </div>
+            `).join('');
+            
+            rankList.innerHTML = '<div class="rank-list-title">📊 完整榜单</div>' + listHtml;
+            
+            // 更新头像
+            setTimeout(setAvatars, 0);
+        }
+        
+        const tabs = document.querySelectorAll('.rank-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                const tabName = this.textContent;
+                updateRankList(tabName);
+            });
+        });
+    </script>
+    
+    <!-- 登录模态框 -->
+    <div class="login-modal-overlay" id="loginModalOverlay">
+        <div class="login-modal">
+            <div class="login-modal-close" onclick="closeLoginModal()">✕</div>
+            
+            <div class="logo-section">
+                <svg class="logo-icon" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="15" width="8" height="30" rx="3" fill="#FF7F50"/>
+                    <rect x="0" y="10" width="6" height="40" rx="2" fill="#FF7F50"/>
+                    <rect x="90" y="15" width="8" height="30" rx="3" fill="#FF7F50"/>
+                    <rect x="94" y="10" width="6" height="40" rx="2" fill="#FF7F50"/>
+                    <rect x="15" y="27" width="70" height="6" rx="3" fill="#FF7F50"/>
+                </svg>
+                <div class="logo-text">健谈</div>
+                <div class="logo-subtitle">FitChat</div>
+            </div>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <input type="text" class="form-input" placeholder="手机号 / 邮箱" id="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" class="form-input" placeholder="密码" id="password" required>
+                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">登录</button>
+            </form>
+            
+            <div class="divider">
+                <div class="divider-line"></div>
+                <span class="divider-text">其他登录方式</span>
+                <div class="divider-line"></div>
+            </div>
+            
+            <div class="social-icons">
+                <div class="social-icon wechat" title="微信登录">
+                    <img src="微信.webp" alt="微信" width="28" height="28">
+                </div>
+                <div class="social-icon qq" title="QQ 登录">
+                    <img src="qq.webp" alt="QQ" width="28" height="28">
+                </div>
+            </div>
+            
+            <div class="register-section">
+                <span class="register-text">还没有账号？</span>
+                <a href="#" class="register-link">立即注册</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 分享模态框 -->
+    <div class="login-modal-overlay" id="shareModalOverlay">
+        <div class="login-modal">
+            <div class="login-modal-close" onclick="closeShareModal()">✕</div>
+            
+            <div class="logo-section">
+                <svg class="logo-icon" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="15" width="8" height="30" rx="3" fill="#FF7F50"/>
+                    <rect x="0" y="10" width="6" height="40" rx="2" fill="#FF7F50"/>
+                    <rect x="90" y="15" width="8" height="30" rx="3" fill="#FF7F50"/>
+                    <rect x="94" y="10" width="6" height="40" rx="2" fill="#FF7F50"/>
+                    <rect x="15" y="27" width="70" height="6" rx="3" fill="#FF7F50"/>
+                </svg>
+                <div class="logo-text">分享榜单</div>
+                <div class="logo-subtitle">FitChat</div>
+            </div>
+            
+            <div class="form-group">
+                <input type="text" class="form-input" value="http://localhost:8000/rank.html" id="shareLink" readonly>
+            </div>
+            
+            <button class="login-btn" onclick="copyLink()">复制链接</button>
+            
+            <div class="divider">
+                <div class="divider-line"></div>
+                <span class="divider-text">分享到</span>
+                <div class="divider-line"></div>
+            </div>
+            
+            <div class="social-icons">
+                <div class="social-icon wechat" title="分享到微信" onclick="shareToWechat()">
+                    <img src="微信.webp" alt="微信" width="28" height="28">
+                </div>
+                <div class="social-icon qq" title="分享到QQ" onclick="shareToQQ()">
+                    <img src="qq.webp" alt="QQ" width="28" height="28">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 登录模态框功能
+        function openLoginModal() {
+            const modalOverlay = document.getElementById('loginModalOverlay');
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeLoginModal() {
+            const modalOverlay = document.getElementById('loginModalOverlay');
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        document.getElementById('loginModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLoginModal();
+            }
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLoginModal();
+                closeShareModal();
+            }
+        });
+        
+        // 分享功能
+        function sharePost() {
+            const modalOverlay = document.getElementById('shareModalOverlay');
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeShareModal() {
+            const modalOverlay = document.getElementById('shareModalOverlay');
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        function copyLink() {
+            const shareLink = document.getElementById('shareLink');
+            shareLink.select();
+            document.execCommand('copy');
+            alert('链接已复制到剪贴板！');
+        }
+        
+        function shareToWechat() {
+            alert('分享到微信功能演示：请使用微信扫码分享！');
+        }
+        
+        function shareToQQ() {
+            alert('分享到QQ功能演示：已打开QQ分享界面！');
+        }
+        
+        // 点击遮罩层关闭分享模态框
+        document.getElementById('shareModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeShareModal();
+            }
+        });
+        
+        // AI助手功能
+        function toggleAIAssistant() {
+            const window = document.getElementById('aiAssistantWindow');
+            window.classList.toggle('active');
+        }
+        
+        function handleAIKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendAIMessage();
+            }
+        }
+        
+        function sendAIMessage() {
+            const input = document.getElementById('aiInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage(message, true);
+            input.value = '';
+            
+            setTimeout(() => {
+                const response = getAIResponse(message);
+                addMessage(response, false);
+            }, 500);
+        }
+        
+        function addMessage(text, isUser) {
+            const messagesContainer = document.getElementById('aiMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isUser ? 'ai-message user-message' : 'ai-message';
+            messageDiv.innerHTML = `<div class="ai-message-content">${text}</div>`;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function getAIResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('减肥') || lowerMessage.includes('减脂')) {
+                return '减肥的关键是"三分练，七分吃"。建议你：\n1. 控制热量摄入，保持热量缺口\n2. 多做有氧运动，如跑步、游泳\n3. 配合力量训练，提高基础代谢\n4. 保证充足睡眠，促进脂肪燃烧';
+            }
+            
+            if (lowerMessage.includes('增肌') || lowerMessage.includes('肌肉')) {
+                return '增肌需要科学训练和营养补充：\n1. 每周3-4次力量训练，注重复合动作\n2. 保证蛋白质摄入（每公斤体重1.6-2.2g）\n3. 充足休息，肌肉在休息时生长\n4. 循序渐进，逐渐增加训练强度';
+            }
+            
+            if (lowerMessage.includes('跑步') || lowerMessage.includes('有氧')) {
+                return '跑步是很好的有氧运动！建议：\n1. 初学者从慢跑开始，逐渐增加距离\n2. 注意跑姿，避免膝盖受伤\n3. 选择合适的跑鞋\n4. 跑前热身，跑后拉伸\n5. 每周跑量增加不超过10%';
+            }
+            
+            if (lowerMessage.includes('瑜伽') || lowerMessage.includes('拉伸')) {
+                return '瑜伽可以改善柔韧性和身心状态：\n1. 从基础体式开始，不要急于求成\n2. 注意呼吸配合，保持专注\n3. 每次练习15-30分钟即可\n4. 坚持练习，效果会越来越好';
+            }
+            
+            if (lowerMessage.includes('饮食') || lowerMessage.includes('营养') || lowerMessage.includes('吃')) {
+                return '健康饮食建议：\n1. 均衡摄入蛋白质、碳水化合物和脂肪\n2. 多吃蔬菜水果，补充维生素\n3. 少油少盐少糖\n4. 定时定量，避免暴饮暴食\n5. 多喝水，每天至少2升';
+            }
+            
+            if (lowerMessage.includes('打卡') || lowerMessage.includes('坚持')) {
+                return '坚持打卡很重要！建议：\n1. 设定明确的目标\n2. 制定可行的计划\n3. 找到健身伙伴互相监督\n4. 记录进步，给自己奖励\n5. 把健身变成习惯，而不是负担';
+            }
+            
+            if (lowerMessage.includes('你好') || lowerMessage.includes('hi') || lowerMessage.includes('hello')) {
+                return '你好！我是你的健身助手，有什么可以帮助你的吗？你可以问我关于减肥、增肌、跑步、瑜伽、饮食等健身相关的问题。';
+            }
+            
+            if (lowerMessage.includes('谢谢') || lowerMessage.includes('感谢')) {
+                return '不客气！如果还有其他问题，随时可以问我。祝你健身愉快！💪';
+            }
+            
+            return '我理解你的问题。健身是一个循序渐进的过程，建议你：\n1. 制定合理的目标\n2. 坚持训练计划\n3. 注意饮食营养\n4. 保证充足休息\n\n如果你想了解更具体的内容，可以问我关于减肥、增肌、跑步、瑜伽或饮食的问题。';
+        }
+    </script>
+</body>
+</html>
